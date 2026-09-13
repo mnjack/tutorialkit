@@ -1,3 +1,4 @@
+.forge-create-link, button[aria-controls="forge-mentor"] { color: var(--tk-text-primary); }
 .forge-create-link { font-size: .85rem; white-space: nowrap; }
 .forge-mentor { position: fixed; z-index: 100; right: 1rem; top: 4rem; width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 5rem); overflow: auto; padding: 1rem; border: 1px solid var(--tk-border-primary); border-radius: .5rem; background: var(--tk-background-primary); color: var(--tk-text-primary); box-shadow: 0 8px 30px #0003; }
 .forge-mentor-heading, .forge-probe-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

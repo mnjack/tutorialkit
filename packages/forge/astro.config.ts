@@ -12,6 +12,11 @@ export default defineConfig({
   devToolbar: { enabled: false },
   integrations: [tutorialkit({ components: { TopBar: './src/components/TopBar.astro' } })],
   vite: {
+    // Native Astro islands discover these after Vite's source scan. Pre-bundle
+    // them before the first page hydrates to avoid a mid-load React reload.
+    optimizeDeps: {
+      include: ['@tutorialkit/astro > @nanostores/react', '@tutorialkit/astro > @stackblitz/sdk'],
+    },
     plugins: [forgeOwnerProxy(forgeUrl)],
     define: { __FORGE_URL__: JSON.stringify(forgeUrl) },
     resolve: {
