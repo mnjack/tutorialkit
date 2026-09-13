@@ -47,10 +47,6 @@ export default function ForgeTools() {
       stopSaving();
       currentKey = key;
       activeRoute.current = pathname;
-      setBinding(lesson || null);
-      setTurns([]);
-      setProbe(null);
-      setError('');
       if (!lesson) return;
       try {
         for (const [path, text] of restoredFiles(localStorage.getItem(key), tutorialStore.documents.get())) {
@@ -88,12 +84,15 @@ export default function ForgeTools() {
       setBinding(null);
       setTurns([]);
       setProbe(null);
+      setError('');
       setSaveStatus('');
       try {
         const loaded = await manifestForRoute(pathname);
         if (disposed || sequence !== loadSequence || pathname !== route()) return;
         manifest = loaded;
         manifestRoute = pathname;
+        // Reading and tutoring need source context even when no editor starts.
+        setBinding(lessonAt(loaded, pathname) || null);
         activate();
       } catch {
         if (!disposed && sequence === loadSequence) setSaveStatus('Course metadata unavailable; saved edits and mentor are disconnected');

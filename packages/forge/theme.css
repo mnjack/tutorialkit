@@ -52,3 +52,32 @@ resizable-panel[data-pos="100%"] .markdown-content { padding-block: 1rem 2rem; }
   .markdown-content blockquote { padding: .75rem 1rem; }
   .forge-wordmark { gap: .4rem; font-size: .95rem; }
 }
+
+
+/* Long course names wrap without clipping or widening native panels. */
+header:has([class*="NavContainer"]) { height: auto; min-height: 82px; flex-shrink: 0; }
+[class*="NavContainer"] { position: relative; overflow: visible; }
+[class*="NavContainer"] > button { min-width: 0; align-items: flex-start; }
+[class*="NavContainer"] > button > .truncate {
+  min-width: 0; flex-wrap: wrap; white-space: normal; overflow: visible;
+  text-overflow: clip; overflow-wrap: anywhere; line-height: 1.5;
+}
+[class*="NavContainer"] [class*="ToggleButtonIcon"] { flex-shrink: 0; margin-top: .25rem; }
+[class*="NavContainer"] > nav {
+  position: absolute; inset-inline: -1px; top: 100%;
+  border: 1px solid var(--tk-border-primary); border-radius: 0 0 .5rem .5rem;
+}
+[class*="NavContainer"] nav :is(a, button, button > span) { min-width: 0; overflow-wrap: anywhere; white-space: normal; text-align: start; }
+[class*="NavContainer"] [class*="AccordionTriggerIcon"] { flex-shrink: 0; }
+.content-nav-card { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.content-nav-card > .line-clamp-2 { display: block; -webkit-line-clamp: unset; overflow: visible; }
+:has(> .markdown-content) > .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.markdown-content :is(h1, h2, h3, h4, h5, h6, a) { overflow-wrap: anywhere; }
+.forge-mentor-heading { align-items: flex-start; }
+.forge-mentor-heading > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.forge-mentor-heading > button { flex-shrink: 0; }
+@media (max-width: 640px) {
+  :has(> .markdown-content) > .grid { grid-template-columns: minmax(0, 1fr); }
+  [class*="NavContainer"] { margin-inline: 0; }
+  header:has([class*="NavContainer"]) { padding-inline: 1rem; }
+}
