@@ -1,0 +1,14 @@
+---
+import NativeTopBar from '@tutorialkit/astro/default/components/TopBar.astro';
+import ForgeTools from './ForgeTools';
+---
+<NativeTopBar>
+  <slot name="logo" slot="logo" />
+  <slot name="download-button" slot="download-button" />
+  <slot name="open-in-stackblitz-link" slot="open-in-stackblitz-link" />
+  <slot name="theme-switch" slot="theme-switch" />
+  <div slot="login-button" class="flex items-center gap-3">
+    <slot name="login-button" />
+    <ForgeTools client:load transition:persist />
+  </div>
+</NativeTopBar>

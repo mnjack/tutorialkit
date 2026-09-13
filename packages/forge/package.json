@@ -1,0 +1,29 @@
+{
+  "name": "@forge/tutorialkit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-content": "node scripts/sync-content.mjs",
+    "dev": "node scripts/sync-content.mjs && astro dev --host 127.0.0.1",
+    "build": "node scripts/sync-content.mjs && astro build",
+    "preview": "astro preview --host 127.0.0.1",
+    "test": "node --test src/components/*.test.mjs"
+  },
+  "dependencies": {
+    "@tutorialkit/react": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/react": "^3.6.0",
+    "@tutorialkit/astro": "workspace:*",
+    "@tutorialkit/theme": "workspace:*",
+    "@tutorialkit/types": "workspace:*",
+    "@types/node": "^20.14.6",
+    "@types/react": "^18.3.3",
+    "astro": "^4.15.0",
+    "typescript": "^5.4.5",
+    "@tutorialkit/runtime": "workspace:*"
+  }
+}

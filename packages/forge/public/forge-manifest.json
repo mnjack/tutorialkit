@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "course_digest": "3581c43e74d86e22e6606fb9e8ccf71e53e3b1b7d69c4f8ec50a9baa7516a7fd",
+  "lessons": {
+    "/welcome/start/lesson": {
+      "course_slug": "",
+      "lesson_id": "welcome",
+      "title": "Welcome to your learning workspace",
+      "assigned_evidence": []
+    }
+  }
+}

@@ -1,0 +1,7 @@
+# Local runtime output; Forge course sources remain in the Forge repository.
+.astro/
+/public/forge-courses.json
+/public/forge-manifests/
+/public/forge-sources/
+/src/content/tutorial/*/
+!/src/content/tutorial/1-welcome/

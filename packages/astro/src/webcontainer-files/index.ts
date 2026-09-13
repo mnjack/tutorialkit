@@ -40,7 +40,20 @@ export class WebContainerFiles {
     });
 
     server.middlewares.use(async (req, res, next) => {
-      const result = await cache.canHandle(req.url);
+      let result = await cache.canHandle(req.url);
+
+      // Atomic publication can add an entire lesson without individual watcher events.
+      // Discover only canonical native file maps, never resolve a request as a disk path.
+      const filesRef = new URL(req.url || '/', 'http://tutorialkit.local').pathname.slice(1);
+      if (!result && /^(?:(?:[^/]+-)?(?:files|solution)|template-[^/]+)\.json$/.test(filesRef)) {
+        const folders = await getAllFilesMap({ contentDir, templatesDir });
+        const folder = folders.find((candidate) => getFilesRef(candidate, { contentDir, templatesDir }) === filesRef);
+
+        if (folder) {
+          cache.generateFileMapForPath(folder);
+          result = await cache.canHandle(req.url);
+        }
+      }
 
       if (!result) {
         next();

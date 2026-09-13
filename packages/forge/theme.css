@@ -1,0 +1,8 @@
+.forge-create-link { font-size: .85rem; white-space: nowrap; }
+.forge-mentor { position: fixed; z-index: 100; right: 1rem; top: 4rem; width: min(28rem, calc(100vw - 2rem)); max-height: calc(100dvh - 5rem); overflow: auto; padding: 1rem; border: 1px solid var(--tk-border-primary); border-radius: .5rem; background: var(--tk-background-primary); color: var(--tk-text-primary); box-shadow: 0 8px 30px #0003; }
+.forge-mentor-heading, .forge-probe-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.forge-mentor p { margin: .75rem 0; font-size: .9rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.forge-mentor textarea { display: block; width: 100%; min-height: 6rem; padding: .5rem; margin: .5rem 0; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .25rem; }
+.forge-mentor button { border: 1px solid currentColor; border-radius: .25rem; padding: .25rem .6rem; }
+.forge-mentor button:disabled { opacity: .5; }
+@media (max-width: 640px) { .forge-create-link { font-size: .7rem; white-space: normal; max-width: 7rem; } }

@@ -1,0 +1,60 @@
+---
+import Layout from '@tutorialkit-layout';
+---
+<Layout title="Open your course">
+  <main style="padding: 2rem; font-family: sans-serif; max-width: 42rem; margin: auto">
+    <h1>Opening your course</h1>
+    <p id="open-status" role="status">Waiting for the TutorialKit export…</p>
+    <a href="/">Open the learning workspace</a>
+  </main>
+</Layout>
+<script>
+  import { localPath, validManifest } from '../components/manifest.mjs';
+  const status = document.getElementById('open-status')!;
+  const query = new URLSearchParams(location.search);
+  const course = query.get('course');
+  const moduleId = query.get('module');
+  let stopped = false;
+  window.addEventListener('pagehide', () => { stopped = true; }, { once: true });
+  async function openCourse() {
+    if (!course) { status.textContent = 'Choose a course in Forge, then open its learning workspace.'; return; }
+    while (!stopped) {
+      try {
+        const response = await fetch('/forge-courses.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error('The course export is not available yet.');
+        const index = await response.json();
+        if (index.errors?.[course]) throw new Error(String(index.errors[course]));
+        const entry = index.courses?.[course];
+        if (entry?.error) throw new Error(String(entry.error));
+        if (entry && localPath(entry.entry_path)) {
+          let target = entry.entry_path;
+          if (!localPath(entry.manifest_path)) throw new Error('The course export has no local provenance manifest.');
+          const manifestResponse = await fetch(entry.manifest_path, { cache: 'no-store' });
+          if (!manifestResponse.ok) throw new Error('The course manifest is not ready.');
+          const manifest = await manifestResponse.json();
+          if (!validManifest(manifest, entry.digest)) throw new Error('The course export and its manifest do not match yet.');
+          const lessons = Object.entries(manifest.lessons || {}).filter(([, value]: any) => value.course_slug === course);
+          if (moduleId) {
+            const moduleRoute = lessons.find(([, value]: any) => value.module_id === moduleId)?.[0];
+            if (!moduleRoute) throw new Error('This module does not have a native lesson export yet.');
+            target = moduleRoute;
+          } else {
+            try {
+              const saved = localStorage.getItem(`forge-tutorialkit:resume:${manifest.course_digest}`);
+              if (saved && lessons.some(([path]) => path.replace(/\/$/, '') === saved)) target = saved;
+            } catch { /* Storage can be disabled. */ }
+          }
+          if (!lessons.some(([path]) => path.replace(/\/$/, '') === target.replace(/\/$/, ''))) throw new Error('The entry lesson is not part of this course export.');
+          if (!localPath(target)) throw new Error('The course export has an invalid lesson route.');
+          location.replace(target);
+          return;
+        }
+        status.textContent = 'Your course is being exported. This page will open it when it is ready.';
+      } catch (error) {
+        status.textContent = `${error instanceof Error ? error.message : 'The export is not available.'} Retrying…`;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+  openCourse();
+</script>
