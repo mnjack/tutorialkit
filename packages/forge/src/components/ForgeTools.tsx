@@ -141,7 +141,8 @@ export default function ForgeTools() {
       let text = '';
       if (['probe', 'probe_retry', 'resolved'].includes(result.status)) text = result.display?.content || '';
       else if (['validated', 'repaired'].includes(result.status)) {
-        text = (result.display?.segments || []).map((segment: any) => [segment.text,
+        text = (result.display?.segments || []).map((segment: any) => [
+          ...(segment.kind === 'general_knowledge' ? [segment.label] : []), segment.text,
           ...(segment.citations || []).map((citation: any) => {
             const source = binding.assigned_evidence?.find((item) => item.mentor_anchor === citation.anchor)?.evidence_ref?.corpus_slug;
             const label = citation.source_course_label || source?.replaceAll('-', ' ') || 'Course source passage';
