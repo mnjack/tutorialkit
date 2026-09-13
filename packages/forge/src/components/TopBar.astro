@@ -3,7 +3,9 @@ import NativeTopBar from '@tutorialkit/astro/default/components/TopBar.astro';
 import ForgeTools from './ForgeTools';
 ---
 <NativeTopBar>
-  <slot name="logo" slot="logo" />
+  <a slot="logo" class="forge-wordmark" href="/" aria-label="Forge home">
+    <span class="forge-wordmark-symbol" aria-hidden="true">F</span>Forge
+  </a>
   <slot name="download-button" slot="download-button" />
   <slot name="open-in-stackblitz-link" slot="open-in-stackblitz-link" />
   <slot name="theme-switch" slot="theme-switch" />

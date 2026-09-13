@@ -6,3 +6,48 @@
 .forge-mentor button { border: 1px solid currentColor; border-radius: .25rem; padding: .25rem .6rem; }
 .forge-mentor button:disabled { opacity: .5; }
 @media (max-width: 640px) { .forge-create-link { font-size: .7rem; white-space: normal; max-width: 7rem; } }
+
+
+/* Keep native panes and tokens; give the reading surface a comfortable measure. */
+.markdown-content {
+  width: 100%;
+  max-width: 68ch;
+  min-width: 0;
+  margin-inline: auto;
+  --content-font-size: 17px;
+  --content-line-height: 1.8;
+  --code-font-size: 0.85em;
+  --blockquote-border-color: var(--tk-border-primary);
+  --blockquote-background: var(--tk-background-secondary);
+  overflow-wrap: break-word;
+}
+/* TutorialContent's native navigation follows the same reading column. */
+:has(> .markdown-content) > :is(.grid, a, div:not(.markdown-content)) {
+  width: 100%;
+  max-width: 68ch;
+  margin-inline: auto;
+}
+resizable-panel[data-pos="100%"] .markdown-content { padding-block: 1rem 2rem; }
+.markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  scroll-margin-block-start: 1.5rem;
+}
+.markdown-content h1 { font-size: clamp(1.8rem, 3vw, 2.25rem); }
+.markdown-content h2 { font-size: clamp(1.45rem, 2.3vw, 1.8rem); margin-block-start: 2.5rem; }
+.markdown-content h3 { font-size: 1.3rem; margin-block-start: 2rem; }
+.markdown-content :is(p, ul, ol) { line-height: 1.8; }
+.markdown-content li + li { margin-block-start: .4rem; }
+.markdown-content :is(pre, .expressive-code) { max-width: 100%; min-width: 0; }
+.markdown-content pre { overflow-x: auto; }
+.markdown-content blockquote { padding: 1rem 1.25rem; border-inline-start: 3px solid var(--tk-border-primary); border-radius: 0 .375rem .375rem 0; }
+.markdown-content blockquote p { line-height: 1.7; }
+.forge-wordmark { display: inline-flex; align-items: center; gap: .65rem; color: var(--tk-text-primary); text-decoration: none; font-weight: 650; font-size: 1.05rem; letter-spacing: -.04em; }
+.forge-wordmark-symbol { display: inline-grid; place-items: center; width: 1.65rem; height: 1.65rem; border: 1px solid var(--tk-border-primary); border-radius: .375rem; background: var(--tk-background-secondary); font-size: .85rem; letter-spacing: 0; }
+.forge-wordmark:focus-visible { outline: 2px solid var(--tk-text-primary); outline-offset: 4px; border-radius: .25rem; }
+@media (max-width: 640px) {
+  .markdown-content { --content-font-size: 16px; --content-line-height: 1.75; }
+  .markdown-content blockquote { padding: .75rem 1rem; }
+  .forge-wordmark { gap: .4rem; font-size: .95rem; }
+}
