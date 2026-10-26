@@ -9,6 +9,7 @@ type Binding = { course_slug: string; lesson_id: string; title: string; assigned
 type Manifest = { course_digest: string; lessons: Record<string, Binding> };
 let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
 const route = () => window.location.pathname.replace(/\/$/, '') || '/';
+const disconnected = 'Course metadata unavailable; saved edits and the tutor are disconnected';
 
 export default function ForgeTools() {
   const [binding, setBinding] = useState<Binding | null>(null);
@@ -18,6 +19,8 @@ export default function ForgeTools() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+  // True when this page may belong to a course whose metadata could not be bound.
+  const [unavailable, setUnavailable] = useState(false);
   const [probe, setProbe] = useState<{ id: string; request: any; retry: boolean } | null>(null);
   const activeRoute = useRef('');
 
@@ -86,16 +89,26 @@ export default function ForgeTools() {
       setProbe(null);
       setError('');
       setSaveStatus('');
+      setUnavailable(false);
       try {
-        const loaded = await manifestForRoute(pathname);
+        let claimed = false;
+        const loaded = await manifestForRoute(pathname, fetch, () => { claimed = true; });
         if (disposed || sequence !== loadSequence || pathname !== route()) return;
+        if (claimed) {
+          setUnavailable(true);
+          setSaveStatus(disconnected);
+          return;
+        }
         manifest = loaded;
         manifestRoute = pathname;
         // Reading and tutoring need source context even when no editor starts.
         setBinding(lessonAt(loaded, pathname) || null);
         activate();
       } catch {
-        if (!disposed && sequence === loadSequence) setSaveStatus('Course metadata unavailable; saved edits and mentor are disconnected');
+        if (!disposed && sequence === loadSequence) {
+          setUnavailable(true);
+          setSaveStatus(disconnected);
+        }
       }
     };
     const unsubscribeLoaded = tutorialStore.lessonFullyLoaded.subscribe((loaded) => {
@@ -124,7 +137,7 @@ export default function ForgeTools() {
       ownerSession ||= establishOwnerSession();
       if ((await ownerSession).kind !== 'ready') {
         ownerSession = undefined;
-        throw new Error('Open Forge locally to reconnect the mentor.');
+        throw new Error('Open Forge locally to reconnect the tutor.');
       }
       let result;
       try {
@@ -149,33 +162,33 @@ export default function ForgeTools() {
               ? ` — ${citation.evidence_label || citation.evidence_status}` : '';
             return `“${citation.quote}” (${label}${evidence})`;
           })].join('\n')).join('\n\n');
-      } else if (result.status === 'withheld') text = 'The mentor could not ground an answer in this lesson’s sources.';
-      if (!text) throw new Error('The mentor returned no validated response.');
-      setTurns((rows) => [...rows, { role: 'Mentor', text }]);
+      } else if (result.status === 'withheld') text = 'The tutor could not ground an answer in this lesson’s sources.';
+      if (!text) throw new Error('The tutor returned no validated response.');
+      setTurns((rows) => [...rows, { role: 'Tutor', text }]);
       const { probe_id: _id, probe_result: _result, ...baseRequest } = request;
       setProbe(result.probe ? { id: result.probe.id, request: baseRequest, retry: result.status !== 'probe' } : null);
       setMessage('');
     } catch (cause) {
-      if (activeRoute.current === sentRoute && route() === sentRoute) setError(cause instanceof Error ? cause.message : 'Mentor unavailable');
+      if (activeRoute.current === sentRoute && route() === sentRoute) setError(cause instanceof Error ? cause.message : 'Tutor unavailable');
     } finally { setBusy(false); }
   }
 
   return <>
     <a href={`${__FORGE_URL__.replace(/\/$/, '')}/create`} className="forge-create-link">Create / import in Forge</a>
-    <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="forge-mentor">Mentor</button>
-    {open && <aside id="forge-mentor" className="forge-mentor" aria-label="Lesson mentor">
-      <div className="forge-mentor-heading"><strong>{binding?.title || 'Lesson mentor'}</strong><button onClick={() => setOpen(false)} aria-label="Close mentor">×</button></div>
+    <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="forge-tutor">Tutor</button>
+    {open && <aside id="forge-tutor" className="forge-tutor" aria-label="Lesson tutor">
+      <div className="forge-tutor-heading"><strong>{binding?.title || 'Lesson tutor'}</strong><button onClick={() => setOpen(false)} aria-label="Close tutor">×</button></div>
       <p>{saveStatus}</p>
       <p>Edits and conversations are not grades or proof of mastery.</p>
-      {!binding?.course_slug ? <p>This example is not connected to a Forge course. Create or import a course to use its source-grounded mentor.</p> : <>
-        <div className="forge-mentor-turns" aria-live="polite">{turns.map((turn, index) => <p key={index}><strong>{turn.role}</strong><br />{turn.text}</p>)}</div>
+      {!binding?.course_slug ? !unavailable && <p>This page isn't part of a Forge course. Create or import a course in Forge to ask its source-grounded tutor.</p> : <>
+        <div className="forge-tutor-turns" aria-live="polite">{turns.map((turn, index) => <p key={index}><strong>{turn.role}</strong><br />{turn.text}</p>)}</div>
         {error && <p role="alert">{error}</p>}
         {probe ? <div className="forge-probe-actions">
           <button disabled={busy} onClick={() => send({ ...probe.request, probe_id: probe.id, probe_result: 'resolved' })}>Resolved</button>
-          <button disabled={busy} onClick={() => send({ ...probe.request, probe_id: probe.id, probe_result: 'failed' })}>{probe.retry ? 'Retry mentor' : 'Still failing'}</button>
+          <button disabled={busy} onClick={() => send({ ...probe.request, probe_id: probe.id, probe_result: 'failed' })}>{probe.retry ? 'Retry tutor' : 'Still failing'}</button>
         </div> : <form onSubmit={(event) => { event.preventDefault(); if (message.trim()) send({ lesson: { id: binding.lesson_id, title: binding.title, check_open: false }, learner_msg: message.trim(), assigned_evidence: binding.assigned_evidence || [] }, message.trim()); }}>
-          <label htmlFor="forge-mentor-message">Ask about this lesson</label>
-          <textarea id="forge-mentor-message" value={message} onChange={(event) => setMessage(event.target.value)} disabled={busy} />
+          <label htmlFor="forge-tutor-message">Ask about this lesson</label>
+          <textarea id="forge-tutor-message" value={message} onChange={(event) => setMessage(event.target.value)} disabled={busy} />
           <button disabled={busy || !message.trim()}>{busy ? 'Thinking…' : 'Send'}</button>
         </form>}
       </>}

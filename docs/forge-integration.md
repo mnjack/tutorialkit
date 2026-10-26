@@ -4,18 +4,42 @@
 standard generated lesson routes, content renderer, navigation, WorkspacePanel,
 WebContainer commands, terminal, previews, and native Solve/Reset. It does not
 route exercise execution or grading to Forge. The only component override wraps
-the existing TopBar and adds a creation link and source-scoped mentor drawer.
+the existing TopBar and adds a creation link and source-scoped tutor drawer.
 
 ## Run
 
-From the TutorialKit repository, after installing the workspace and building its
-packages:
+Install the workspace and build its packages once, from this repository:
 
 ```sh
-FORGE_WORKTREE=/Users/max/dev/learning_forge-tutorialkit \
-FORGE_URL=http://127.0.0.1:8876 \
-pnpm --filter @forge/tutorialkit dev --port 4322
+CI=true HUSKY=0 npx pnpm@8.15.6 install
+npx pnpm@8.15.6 run build
 ```
+
+Then start Forge and this app together with the Learning Forge launcher, from the
+Learning Forge checkout. On a work branch, or when an agent runs it, serve a scratch
+copy of your course folder, never the folder itself:
+
+```sh
+scripts/tutorialkit-workbench --source-root ~/Documents/dev/forge-courses \
+    --data-root ~/Documents/dev/forge-courses-scratch/<name>
+```
+
+The first run copies `--source-root` into `--data-root`, and later runs serve that copy.
+Run it with no arguments only from Learning Forge's `main`, where it serves
+`~/Documents/dev/forge-courses` itself:
+
+```sh
+scripts/tutorialkit-workbench
+```
+
+Until Learning Forge's laptop launcher (epic E2.0) reaches `main`, the launcher on
+`main` still defaults to Mac mini folders, so always pass both flags there too.
+
+It prints both addresses (usually `http://127.0.0.1:4322` for TutorialKit and
+`http://127.0.0.1:8876` for Forge) and stops both on Ctrl-C. The launcher sets
+`FORGE_WORKTREE` and `FORGE_URL` for this app. Without them, `FORGE_WORKTREE`
+defaults to the `learning-forge` checkout beside this repository and `FORGE_URL`
+to `http://127.0.0.1:8876`.
 
 `FORGE_URL` selects the original Forge creation UI and the development `/api`
 proxy. The source alias `@forge` reuses Forge's pure API and owner-session bootstrap
@@ -41,7 +65,7 @@ in this export; Forge internal authoring artifacts are not copied implicitly.
 The manifest has `schema_version: 1`, a 64-character SHA-256 `course_digest`, and
 `lessons`, keyed by the actual native URL path. Each lesson row carries
 `course_slug`, `module_id`, `lesson_id`, `title`, and optional `assigned_evidence`
-containing the original `{mentor_anchor, evidence_ref}` pairs. The mentor sends
+containing the original `{mentor_anchor, evidence_ref}` pairs. The tutor sends
 only the selected lesson binding and displays server-authored probes or validated
 responses. It does not create an alternate assessment system.
 
@@ -52,8 +76,10 @@ responses. It does not create an alternate assessment system.
 ```
 
 Each index row points to its own manifest; optional `routes` lists its native paths.
-The mentor checks the index digest and exact route-to-course binding before using
-provenance or saved edits. It opens the matching manifest module when requested, otherwise resumes a saved
+The tutor drawer checks the index digest and exact route-to-course binding before using
+provenance or saved edits. When a course's `routes` lists the page but no valid manifest
+binds it (a stale digest, or a manifest not yet written), the drawer says the course
+metadata is unavailable and that saved edits and the tutor are disconnected. It opens the matching manifest module when requested, otherwise resumes a saved
 lesson belonging to that manifest or opens the entry route. The optional single-export sync
 script merges its course into this index. The launcher owns the automatic multi-course
 watch/export process; normal builds without FORGE_TUTORIAL_DIR do not alter content. A supervising exporter can publish the index after its
@@ -69,16 +95,25 @@ lagging WebContainer filesystem snapshot. Binary files and newly created files
 outside the exported editable set are not restored. This is editor continuity,
 not grading, completion, or mastery. Native Solve and Reset remain available.
 
-The welcome JavaScript lesson works without a Forge course. Its mentor explains
-that a generated course is needed. The application never substitutes a backend
-Python runner for TutorialKit's runtime.
+The welcome JavaScript lesson works without a Forge course. Its content sets
+`slug: welcome/start/lesson/content`, so it builds at `/welcome/start/lesson`, the
+only key in the bundled `public/forge-manifest.json`. That manifest binds the page
+whether or not courses are exported, so the welcome page keeps its edits. Its
+tutor drawer says the page isn't part of a Forge course and shows no error. The
+application never substitutes a backend Python runner for TutorialKit's runtime.
 
 ## Verification and source grounding
 
-Seven focused persistence/manifest tests cover course ownership and stale digest
+Focused persistence/manifest tests cover course ownership and stale digest
 rejection as well as version/route isolation, the asynchronous
-filesystem-write race, and rejecting unlisted file restoration. Native build and
-visible browser runtime verification are performed by the coordinating agent.
+filesystem-write race, rejecting unlisted file restoration, the welcome binding
+while courses are exported, the welcome route, and reporting a listed course route
+without a valid manifest as unavailable. `wording.test.mjs` keeps
+"mentor" out of the drawer and its styles, except Forge's own API names. The build ends
+with `scripts/check-build.mjs`, which fails unless every route in the bundled manifest
+has a built page, no welcome page is built at a numbered folder path, and no built
+file uses `forge-mentor`. Visible browser runtime verification is performed by the
+coordinating agent.
 
 The integration uses Astro's documented `vite` config passthrough and process.env
 configuration: https://docs.astro.build/en/reference/configuration-reference/#vite
@@ -87,9 +122,10 @@ and https://docs.astro.build/en/guides/environment-variables/#in-the-astro-confi
 `80cb118647a45cc0dcef1f8018ebc0eef845c8eb`; the runtime singleton alias deliberately
 resolves the same built module that WorkspacePanelWrapper imports.
 
-The open page displays launcher `errors[course]` while retrying. A missing course
-index permits only the bundled welcome manifest, never a stale exported course.
-Mentor API compatibility follows the existing SSE final/probe contract, including
+The open page displays launcher `errors[course]` while retrying. The bundled welcome
+manifest supplies only rows without a course slug, and never a route that an
+exported course lists, so it cannot stand in for a stale exported course.
+The tutor follows Forge's existing `/mentor` SSE final/probe contract, including
 model-free probe re-sync after a lost response. Citations show the exact returned
 quote, source corpus label, and evidence qualification; opaque anchor IDs are not
 used as learner-facing source names.
