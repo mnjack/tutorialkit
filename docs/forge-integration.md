@@ -17,23 +17,24 @@ npx pnpm@8.15.6 run build
 
 Then start Forge and this app together with the Learning Forge launcher, from the
 Learning Forge checkout. On a work branch, or when an agent runs it, serve a scratch
-copy of your course folder, never the folder itself:
+copy of a scratch source folder, never `~/Documents/dev/forge-courses` or a copy of it:
+that folder holds book courses, which stay there only (Learning Forge's D46, ADR-032).
+The scratch source folder holds copies of `forge-courses`' `config.yaml` and
+`trust_registry.yaml`, Learning Forge's `prompts/` and an empty `build/`:
 
 ```sh
-scripts/tutorialkit-workbench --source-root ~/Documents/dev/forge-courses \
+scripts/tutorialkit-workbench --source-root ~/Documents/dev/forge-courses-scratch/<name>-source \
     --data-root ~/Documents/dev/forge-courses-scratch/<name>
 ```
 
 The first run copies `--source-root` into `--data-root`, and later runs serve that copy.
-Run it with no arguments only from Learning Forge's `main`, where it serves
-`~/Documents/dev/forge-courses` itself:
+On a work branch the launcher refuses any other folder, and refuses `forge-courses` as
+`--source-root`. Run it with no arguments only from Learning Forge's `main`, where it
+serves `~/Documents/dev/forge-courses` itself:
 
 ```sh
 scripts/tutorialkit-workbench
 ```
-
-Until Learning Forge's laptop launcher (epic E2.0) reaches `main`, the launcher on
-`main` still defaults to Mac mini folders, so always pass both flags there too.
 
 It prints both addresses (usually `http://127.0.0.1:4322` for TutorialKit and
 `http://127.0.0.1:8876` for Forge) and stops both on Ctrl-C. The launcher sets
@@ -108,7 +109,13 @@ Focused persistence/manifest tests cover course ownership and stale digest
 rejection as well as version/route isolation, the asynchronous
 filesystem-write race, rejecting unlisted file restoration, the welcome binding
 while courses are exported, the welcome route, and reporting a listed course route
-without a valid manifest as unavailable. `wording.test.mjs` keeps
+without a valid manifest as unavailable. `drawerSession.test.mjs` drives the drawer's
+page binding (`followLessonPages` in `drawerSession.mjs`) through in-app navigation: a
+page whose workspace hasn't yet replaced the previous lesson in TutorialKit's store binds
+nothing, so one lesson's edits never land in another's. It also checks the status line:
+"Nothing to edit on this page" on a lesson with no editor (D59, `editing.mjs`), "Edits
+saved in this browser" on a practice lesson, the disconnected message with its next step,
+and that the line is a polite live region hidden while empty. `wording.test.mjs` keeps
 "mentor" out of the drawer and its styles, except Forge's own API names. The build ends
 with `scripts/check-build.mjs`, which fails unless every route in the bundled manifest
 has a built page, no welcome page is built at a numbered folder path, and no built

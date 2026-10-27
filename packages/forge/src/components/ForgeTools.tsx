@@ -2,15 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { sendMentorTurnStream } from '@forge/api';
 import { establishOwnerSession } from '@forge/bootstrap';
 import { tutorialStore } from '@tutorialkit-webcontainer';
-import { editKey, editorSnapshot, restoredFiles } from './persistence.mjs';
-import { manifestForRoute, lessonAt } from './manifest.mjs';
-import { NOTHING_TO_EDIT, nothingToEdit } from './editing.mjs';
+import { followLessonPages } from './drawerSession.mjs';
 
 type Binding = { course_slug: string; lesson_id: string; title: string; assigned_evidence?: { mentor_anchor: string; evidence_ref: { corpus_slug?: string } }[] };
-type Manifest = { course_digest: string; lessons: Record<string, Binding> };
 let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
 const route = () => window.location.pathname.replace(/\/$/, '') || '/';
-const disconnected = 'Course metadata unavailable; saved edits and the tutor are disconnected';
 
 export default function ForgeTools() {
   const [binding, setBinding] = useState<Binding | null>(null);
@@ -25,116 +21,23 @@ export default function ForgeTools() {
   const [probe, setProbe] = useState<{ id: string; request: any; retry: boolean } | null>(null);
   const activeRoute = useRef('');
 
-  useEffect(() => {
-    let disposed = false;
-    let manifest: Manifest | null = null;
-    let manifestRoute = "";
-    let loadSequence = 0;
-    let unsubscribeDocuments = () => {};
-    let flush = () => {};
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let currentKey = '';
-
-    const stopSaving = () => {
-      clearTimeout(timer);
-      unsubscribeDocuments();
-      unsubscribeDocuments = () => {};
-      flush();
-      flush = () => {};
-    };
-    const activate = () => {
-      if (!manifest || manifestRoute !== route() || disposed) return;
-      const pathname = route();
-      const lesson = lessonAt(manifest, pathname);
-      if (lesson && nothingToEdit(document, tutorialStore)) {
-        // A reading lesson has no editor, so nothing is saved; say so instead of leaving the line blank.
-        stopSaving();
-        currentKey = '';
-        setSaveStatus(NOTHING_TO_EDIT);
-        return;
-      }
-      if (!tutorialStore.lessonFullyLoaded.get()) return;
-      const key = editKey(manifest.course_digest, pathname);
-      if (currentKey === key) return;
-      stopSaving();
-      currentKey = key;
-      activeRoute.current = pathname;
-      if (!lesson) return;
-      try {
-        for (const [path, text] of restoredFiles(localStorage.getItem(key), tutorialStore.documents.get())) {
-          tutorialStore.updateFile(path, text);
-        }
-        localStorage.setItem(`forge-tutorialkit:resume:${manifest.course_digest}`, pathname);
-        setSaveStatus('Edits saved in this browser');
-      } catch {
-        setSaveStatus('Browser storage unavailable; edits will not survive reopening');
-      }
-      // Capture each edit synchronously; unload must not read a different lesson's store.
-      let saved = editorSnapshot(tutorialStore);
-      flush = () => {
-        try {
-          localStorage.setItem(key, JSON.stringify({ version: 1, files: saved }));
-        } catch {
-          if (!disposed) setSaveStatus('Browser storage unavailable; edits will not survive reopening');
-        }
-      };
-      unsubscribeDocuments = tutorialStore.documents.subscribe(() => {
-        if (!tutorialStore.lessonFullyLoaded.get()) return;
-        saved = editorSnapshot(tutorialStore);
-        clearTimeout(timer);
-        timer = setTimeout(flush, 300);
-      });
-    };
-    const changed = async () => {
-      const pathname = route();
-      const sequence = ++loadSequence;
-      stopSaving();
-      currentKey = '';
-      manifest = null;
-      manifestRoute = '';
-      activeRoute.current = pathname;
-      setBinding(null);
-      setTurns([]);
-      setProbe(null);
-      setError('');
-      setSaveStatus('');
-      setUnavailable(false);
-      try {
-        let claimed = false;
-        const loaded = await manifestForRoute(pathname, fetch, () => { claimed = true; });
-        if (disposed || sequence !== loadSequence || pathname !== route()) return;
-        if (claimed) {
-          setUnavailable(true);
-          setSaveStatus(disconnected);
-          return;
-        }
-        manifest = loaded;
-        manifestRoute = pathname;
-        // Reading and tutoring need source context even when no editor starts.
-        setBinding(lessonAt(loaded, pathname) || null);
-        activate();
-      } catch {
-        if (!disposed && sequence === loadSequence) {
-          setUnavailable(true);
-          setSaveStatus(disconnected);
-        }
-      }
-    };
-    const unsubscribeLoaded = tutorialStore.lessonFullyLoaded.subscribe((loaded) => {
-      if (loaded) activate();
-      else { stopSaving(); currentKey = ''; }
-    });
-    changed();
-    document.addEventListener('astro:page-load', changed);
-    window.addEventListener('pagehide', stopSaving);
-    return () => {
-      disposed = true;
-      stopSaving();
-      unsubscribeLoaded();
-      document.removeEventListener('astro:page-load', changed);
-      window.removeEventListener('pagehide', stopSaving);
-    };
-  }, []);
+  useEffect(() => followLessonPages({
+    store: tutorialStore, page: document, view: window, fetcher: fetch,
+    ui: {
+      reset(pathname: string) {
+        activeRoute.current = pathname;
+        setBinding(null);
+        setTurns([]);
+        setProbe(null);
+        setError('');
+        setSaveStatus('');
+        setUnavailable(false);
+      },
+      bind: setBinding,
+      status: setSaveStatus,
+      unavailable: () => setUnavailable(true),
+    },
+  }), []);
 
   async function send(request: any, ownerText?: string) {
     if (!binding || busy) return;
@@ -187,7 +90,7 @@ export default function ForgeTools() {
     <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="forge-tutor">Tutor</button>
     {open && <aside id="forge-tutor" className="forge-tutor" aria-label="Lesson tutor">
       <div className="forge-tutor-heading"><strong>{binding?.title || 'Lesson tutor'}</strong><button onClick={() => setOpen(false)} aria-label="Close tutor">×</button></div>
-      <p>{saveStatus}</p>
+      <p role="status" aria-live="polite">{saveStatus}</p>
       <p>Edits and conversations are not grades or proof of mastery.</p>
       {!binding?.course_slug ? !unavailable && <p>This page isn't part of a Forge course. Create or import a course in Forge to ask its source-grounded tutor.</p> : <>
         <div className="forge-tutor-turns" aria-live="polite">{turns.map((turn, index) => <p key={index}><strong>{turn.role}</strong><br />{turn.text}</p>)}</div>
