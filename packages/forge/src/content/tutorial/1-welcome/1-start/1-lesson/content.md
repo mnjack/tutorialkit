@@ -1,6 +1,7 @@
 ---
 type: lesson
 title: Welcome to your learning workspace
+slug: welcome/start/lesson/content
 focus: /main.js
 mainCommand: ['node main.js', 'Run the welcome example']
 ---

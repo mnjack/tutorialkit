@@ -5,7 +5,7 @@ import { defineConfig } from 'astro/config';
 import { forgeOwnerProxy } from './src/lib/forgeProxy.mjs';
 
 const appRoot = fileURLToPath(new URL('.', import.meta.url));
-const forgeRoot = process.env.FORGE_WORKTREE || resolve(appRoot, '../../../learning_forge-tutorialkit');
+const forgeRoot = process.env.FORGE_WORKTREE || resolve(appRoot, '../../../learning-forge');
 const forgeUrl = process.env.FORGE_URL || 'http://127.0.0.1:8876';
 
 export default defineConfig({
