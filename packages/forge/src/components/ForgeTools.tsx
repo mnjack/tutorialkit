@@ -4,6 +4,7 @@ import { establishOwnerSession } from '@forge/bootstrap';
 import { tutorialStore } from '@tutorialkit-webcontainer';
 import { editKey, editorSnapshot, restoredFiles } from './persistence.mjs';
 import { manifestForRoute, lessonAt } from './manifest.mjs';
+import { NOTHING_TO_EDIT, nothingToEdit } from './editing.mjs';
 
 type Binding = { course_slug: string; lesson_id: string; title: string; assigned_evidence?: { mentor_anchor: string; evidence_ref: { corpus_slug?: string } }[] };
 type Manifest = { course_digest: string; lessons: Record<string, Binding> };
@@ -42,9 +43,17 @@ export default function ForgeTools() {
       flush = () => {};
     };
     const activate = () => {
-      if (!manifest || manifestRoute !== route() || disposed || !tutorialStore.lessonFullyLoaded.get()) return;
+      if (!manifest || manifestRoute !== route() || disposed) return;
       const pathname = route();
       const lesson = lessonAt(manifest, pathname);
+      if (lesson && nothingToEdit(document, tutorialStore)) {
+        // A reading lesson has no editor, so nothing is saved; say so instead of leaving the line blank.
+        stopSaving();
+        currentKey = '';
+        setSaveStatus(NOTHING_TO_EDIT);
+        return;
+      }
+      if (!tutorialStore.lessonFullyLoaded.get()) return;
       const key = editKey(manifest.course_digest, pathname);
       if (currentKey === key) return;
       stopSaving();
