@@ -40,7 +40,9 @@ It prints both addresses (usually `http://127.0.0.1:4322` for TutorialKit and
 `http://127.0.0.1:8876` for Forge) and stops both on Ctrl-C. The launcher sets
 `FORGE_WORKTREE` and `FORGE_URL` for this app. Without them, `FORGE_WORKTREE`
 defaults to the `learning-forge` checkout beside this repository and `FORGE_URL`
-to `http://127.0.0.1:8876`.
+to `http://127.0.0.1:8876`. A fork branch that imports Forge code not yet on Forge's
+`main` (through `@forge`) builds only with `FORGE_WORKTREE` set to that Forge work
+branch's checkout; merge the Forge side first, then the fork.
 
 `FORGE_URL` selects the original Forge creation UI and the development `/api`
 proxy. The source alias `@forge` reuses Forge's pure API and owner-session bootstrap

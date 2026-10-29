@@ -18,6 +18,11 @@ type Lesson = { course_slug: string; module_id: string; hands_on: { task_digest:
 
 export const SAVED = 'Your progress on these steps is saved with the course. What you paste is never saved.';
 export const NOT_SAVED = 'Your progress on these steps isn’t being saved: open Forge to save it. What you paste is never saved.';
+export const NOT_SAVED_NOW = 'Forge couldn’t save your progress just now. Reload the page in a moment and try again. What you paste is never saved.';
+
+// Forge answered but refused (a busy course, a task that changed since the page loaded): it is
+// open, so reloading helps. With no answer at all, Forge isn't running.
+const notSaved = (error: unknown) => (Number.isInteger((error as any)?.status) ? NOT_SAVED_NOW : NOT_SAVED);
 
 let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
 async function connected() {
@@ -40,7 +45,8 @@ function PasteBox({ step, status, onChecked }: { step: Step; status?: string; on
       return;
     }
     setText(value);
-    if (result?.status === 'refused') setResult(null);
+    // Any edit drops the last result: it was about text that is no longer in the box.
+    setResult(null);
   };
   const check = () => {
     const outcome = checkPaste(step.check, text);
@@ -111,8 +117,8 @@ export default function HandsOn() {
         if (turn !== sequence.current) return;
         if (saved.task_digest === lesson.hands_on.task_digest) setStates(saved.steps || {});
         setSaving(SAVED);
-      } catch {
-        if (turn === sequence.current) setSaving(NOT_SAVED);
+      } catch (error) {
+        if (turn === sequence.current) setSaving(notSaved(error));
       }
     };
     load();
@@ -139,8 +145,8 @@ export default function HandsOn() {
       await saveHandsOnStep(lesson.course_slug, lesson.module_id,
         { task_digest: lesson.hands_on.task_digest, step_id: step.id, status });
       if (turn === sequence.current) setSaving(SAVED);
-    } catch {
-      if (turn === sequence.current) setSaving(NOT_SAVED);
+    } catch (error) {
+      if (turn === sequence.current) setSaving(notSaved(error));
     }
   };
   return <>
