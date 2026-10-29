@@ -5,6 +5,7 @@ import { getHandsOnProgress, saveHandsOnStep } from '@forge/api';
 import { establishOwnerSession } from '@forge/bootstrap';
 import { lessonAt, manifestForRoute } from './manifest.mjs';
 import { mountPoints, removeMountPoints } from './handsOnPage.mjs';
+import { handsOnSaves } from './handsOnSaves.mjs';
 
 // A hands-on lesson (D73): Forge exported its numbered steps as Markdown and listed each step's
 // declared paste check in the course manifest. This adds a paste box under each checked step and
@@ -82,11 +83,14 @@ export default function HandsOn() {
   const [states, setStates] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState('');
   const sequence = useRef(0);
+  const saves = useRef<ReturnType<typeof handsOnSaves> | null>(null);
 
   useEffect(() => {
     let disposed = false;
     let mounted: HTMLElement[] = [];
     const clear = () => {
+      saves.current?.stop();
+      saves.current = null;
       removeMountPoints(mounted);
       mounted = [];
       setPage(null);
@@ -111,44 +115,37 @@ export default function HandsOn() {
       content.insertBefore(status, [...content.children].find((child) => child.tagName === 'H2') || null);
       mounted = [...slots, status];
       setPage({ lesson, slots, status });
-      try {
-        await connected();
-        const saved = await getHandsOnProgress(lesson.course_slug, lesson.module_id);
-        if (turn !== sequence.current) return;
-        if (saved.task_digest === lesson.hands_on.task_digest) setStates(saved.steps || {});
-        setSaving(SAVED);
-      } catch (error) {
-        if (turn === sequence.current) setSaving(notSaved(error));
-      }
+      const { course_slug: slug, module_id: moduleId } = lesson;
+      const digest = lesson.hands_on.task_digest;
+      // This page turn's saves, one at a time in click order; the next turn starts a new queue.
+      saves.current = handsOnSaves({
+        digest,
+        send: async (step_id, status) => {
+          await connected();
+          return saveHandsOnStep(slug, moduleId, { task_digest: digest, step_id, status });
+        },
+        read: async () => {
+          await connected();
+          return getHandsOnProgress(slug, moduleId);
+        },
+        show: setStates,
+        report: (error) => setSaving(error === null ? SAVED : notSaved(error)),
+      });
+      saves.current.load();
     };
     load();
     document.addEventListener('astro:page-load', load);
     return () => {
       disposed = true;
       document.removeEventListener('astro:page-load', load);
+      saves.current?.stop();
       removeMountPoints(mounted);
     };
   }, []);
 
   if (!page) return null;
   const { lesson } = page;
-  const save = async (step: Step, status: string) => {
-    const turn = sequence.current;
-    setStates((current) => {
-      const next = { ...current };
-      if (status === 'open') delete next[step.id];
-      else next[step.id] = status;
-      return next;
-    });
-    try {
-      await connected();
-      await saveHandsOnStep(lesson.course_slug, lesson.module_id,
-        { task_digest: lesson.hands_on.task_digest, step_id: step.id, status });
-      if (turn === sequence.current) setSaving(SAVED);
-    } catch (error) {
-      if (turn === sequence.current) setSaving(notSaved(error));
-    }
-  };
+  const save = (step: Step, status: string) => { saves.current?.save(step.id, status); };
   return <>
     {createPortal(<span role="status" aria-live="polite">{saving}</span>, page.status)}
     {lesson.hands_on.steps.map((step, index) => createPortal(step.check
