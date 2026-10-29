@@ -1,6 +1,7 @@
 ---
 import NativeTopBar from '@tutorialkit/astro/default/components/TopBar.astro';
 import ForgeTools from './ForgeTools';
+import HandsOn from './HandsOn';
 ---
 <NativeTopBar>
   <a slot="logo" class="forge-wordmark" href="/" aria-label="Forge home">
@@ -12,5 +13,6 @@ import ForgeTools from './ForgeTools';
   <div slot="login-button" class="flex items-center gap-3">
     <slot name="login-button" />
     <ForgeTools client:load transition:persist />
+    <HandsOn client:load />
   </div>
 </NativeTopBar>
