@@ -47,15 +47,14 @@ export default function Ratings() {
         lesson = manifest ? lessonAt(manifest, path) : null;
       } catch { return; }
       if (disposed || turn !== sequence.current || !lesson?.course_slug || !Array.isArray(lesson.blocks) || !lesson.blocks.length) return;
-      const content = document.querySelector('.markdown-content');
-      if (!content) return;
-      const slots = ratingSlots(content, lesson.blocks, document);
-      mounted = slots;
       const slug = lesson.course_slug;
       const route = normalizeRoute(path);
       const version = manifest.course_digest;
-      setPage({ blocks: lesson.blocks, slots, reasons: Array.isArray(manifest.rating_reasons) ? manifest.rating_reasons : [] });
       const queue = ratingSaves({
+        load: async () => {
+          await connected();
+          return (await getRatings(slug, route)).ratings;
+        },
         send: async (block_id, rating) => {
           await connected();
           return saveRating(slug, { route, block_id, vote: rating.vote, reasons: rating.reasons, note: rating.note, course_version: version });
@@ -64,13 +63,16 @@ export default function Ratings() {
         report: (blockId, error) => setLines((current) => ({ ...current, [blockId]: error === null ? SAVED : notSaved(error) })),
       });
       saves.current = queue;
-      try {
-        await connected();
-        const reply = await getRatings(slug, route);
-        if (!disposed && saves.current === queue) queue.hold(reply.ratings);
-      } catch {
-        // The rows still show; a press says whether Forge saved it.
-      }
+      // The rows appear once Forge has said what it holds for the page, so they open showing the
+      // saved thumbs, chips and notes. If it couldn't say, they still appear: a press reads them
+      // again before it sends anything, and says so on its row when Forge still can't answer.
+      await queue.loaded().catch(() => {});
+      if (disposed || saves.current !== queue) return;
+      const content = document.querySelector('.markdown-content');
+      if (!content) return;
+      const slots = ratingSlots(content, lesson.blocks, document);
+      mounted = slots;
+      setPage({ blocks: lesson.blocks, slots, reasons: Array.isArray(manifest.rating_reasons) ? manifest.rating_reasons : [] });
     };
     load();
     document.addEventListener('astro:page-load', load);

@@ -90,7 +90,10 @@ reason chips (`rating_reasons`). `Ratings.tsx` puts a quiet row under each block
 it, a whole-page row after the text): thumbs up and down, then the chips and an "Add a note" button
 after a press (`ratingRow.mjs`). Each press saves at once through Forge's
 `/api/courses/{slug}/ratings`, one request at a time in press order, each carrying the block's
-whole rating so the latest press wins (`ratingSaves.mjs`); nothing pops up. "Add a note" moves
+whole rating so the latest press wins (`ratingSaves.mjs`); nothing pops up. The rows appear once
+Forge has said what the learner already rated on the page, so a press always lands on the saved
+chips and note. If Forge couldn't say, a press reads them again first and, when it still can't,
+sends nothing and says on its row that it wasn't saved. "Add a note" moves
 focus into the note box, and a typed note saves when the box loses focus (so a chip or thumb
 pressed next saves it first) or on "Save note". The row's status line sits left of its label, so
 "Saved." never moves the thumbs; a failed save shows Forge's own words only for its learner
