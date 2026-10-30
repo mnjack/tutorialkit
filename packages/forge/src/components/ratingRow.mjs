@@ -20,8 +20,13 @@ export function noteChange(value, guard) {
 function Note({ block, note, guard, onNote }) {
   const [draft, setDraft] = useState(note);
   const [message, setMessage] = useState('');
+  const [open, setOpen] = useState(Boolean(note));
   useEffect(() => setDraft(note), [note]);
   const id = `forge-rating-note-${block.id}`;
+  // Closed, the note is one small button, so a press leaves the row quiet.
+  if (!open && !note) {
+    return h('button', { type: 'button', className: 'forge-rating-chip forge-rating-add-note', onClick: () => setOpen(true) }, 'Add a note');
+  }
   return h('div', { className: 'forge-rating-note' },
     h('label', { htmlFor: id }, 'Note (optional)'),
     h('textarea', {

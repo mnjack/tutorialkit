@@ -30,9 +30,16 @@ test('after a press the reason chips and the optional note appear inline', () =>
   for (const { label } of REASONS) assert.match(html, new RegExp(`>${label}</button>`));
   assert.match(html, /aria-pressed="true"[^>]*>Sounds like AI</);
   assert.match(html, /aria-pressed="false"[^>]*>Wrong fact</);
-  assert.match(html, /<textarea[^>]*maxLength="2000"/i);
+  assert.match(html, />Add a note</, 'the optional note waits behind one small button');
+  assert.doesNotMatch(html, /textarea/);
   assert.match(html, /Saved\./);
   assert.doesNotMatch(html, /role="dialog"/, 'nothing pops up');
+});
+
+test('a saved note shows in its box, at most 2,000 characters', () => {
+  const html = row({ rating: { vote: 'up', reasons: [], note: 'More of these, please.' } });
+  assert.match(html, /<textarea[^>]*maxLength="2000"[^>]*>More of these, please\.<\/textarea>/i);
+  assert.match(html, /<button type="button" disabled="">Save note<\/button>/);
 });
 
 test('a row placed away from its block names the block', () => {

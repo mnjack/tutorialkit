@@ -87,7 +87,7 @@ rates on that page (`blocks`: each `##` section of a lesson and each quiz in it,
 of its section; or the whole page for a hands-on task or an exercise), and the manifest lists the
 reason chips (`rating_reasons`). `Ratings.tsx` puts a quiet row under each block
 (`ratingsPage.mjs` decides where: a section's row at its end or above its quiz, a quiz's row under
-it, a whole-page row after the text): thumbs up and down, then the chips and an optional note
+it, a whole-page row after the text): thumbs up and down, then the chips and an "Add a note" button
 after a press (`ratingRow.mjs`). Each press saves at once through Forge's
 `/api/courses/{slug}/ratings`, one request at a time in press order, each carrying the block's
 whole rating so the latest press wins (`ratingSaves.mjs`); nothing pops up. The note box clears

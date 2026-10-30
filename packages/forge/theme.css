@@ -31,6 +31,7 @@
 .forge-rating-reasons { margin-block-start: .75rem; }
 .forge-rating-chip { padding: .25rem .7rem; border: 1px solid var(--tk-border-secondary); border-radius: 999px; background: transparent; color: var(--tk-text-secondary); font-size: .8rem; }
 .forge-rating-chip:hover { color: var(--tk-text-primary); }
+.forge-rating-add-note { border-style: dashed; }
 .forge-rating-chip[aria-pressed="true"] { color: var(--tk-text-primary); border-color: var(--tk-text-secondary); background: var(--tk-background-secondary); }
 .forge-rating-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .4rem .5rem; width: 100%; margin-block-start: .5rem; text-align: start; }
 .forge-rating-note label { grid-column: 1 / -1; font-size: .8rem; }
