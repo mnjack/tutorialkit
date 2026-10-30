@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { checkPaste, looksLikeSecret, REFUSED } from '@forge/lib/handsOn.js';
 import { getHandsOnProgress, saveHandsOnStep } from '@forge/api';
-import { establishOwnerSession } from '@forge/bootstrap';
 import { lessonAt, manifestForRoute } from './manifest.mjs';
 import { mountPoints, removeMountPoints } from './handsOnPage.mjs';
 import { handsOnSaves } from './handsOnSaves.mjs';
+import { connected } from './ownerSession';
 
 // A hands-on lesson (D73): Forge exported its numbered steps as Markdown and listed each step's
 // declared paste check in the course manifest. This adds a paste box under each checked step and
@@ -24,15 +24,6 @@ export const NOT_SAVED_NOW = 'Forge couldn’t save your progress just now. Relo
 // Forge answered but refused (a busy course, a task that changed since the page loaded): it is
 // open, so reloading helps. With no answer at all, Forge isn't running.
 const notSaved = (error: unknown) => (Number.isInteger((error as any)?.status) ? NOT_SAVED_NOW : NOT_SAVED);
-
-let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
-async function connected() {
-  ownerSession ||= establishOwnerSession();
-  if ((await ownerSession).kind !== 'ready') {
-    ownerSession = undefined;
-    throw new Error('Forge is not available');
-  }
-}
 
 function PasteBox({ step, status, onChecked }: { step: Step; status?: string; onChecked: () => void }) {
   const [text, setText] = useState('');

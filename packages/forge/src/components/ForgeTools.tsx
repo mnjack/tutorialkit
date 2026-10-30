@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { sendMentorTurnStream } from '@forge/api';
-import { establishOwnerSession } from '@forge/bootstrap';
 import { tutorialStore } from '@tutorialkit-webcontainer';
 import { followLessonPages } from './drawerSession.mjs';
 import { tutorReplyText } from './tutorReply.mjs';
+import { connected } from './ownerSession';
 
 type Binding = { course_slug: string; lesson_id: string; title: string; assigned_evidence?: { mentor_anchor: string; evidence_ref: { corpus_slug?: string } }[] };
-let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
 const route = () => window.location.pathname.replace(/\/$/, '') || '/';
 
 export default function ForgeTools() {
@@ -47,11 +46,9 @@ export default function ForgeTools() {
     setError('');
     if (ownerText) setTurns((rows) => [...rows, { role: 'You', text: ownerText }]);
     try {
-      ownerSession ||= establishOwnerSession();
-      if ((await ownerSession).kind !== 'ready') {
-        ownerSession = undefined;
+      await connected().catch(() => {
         throw new Error('Open Forge locally to reconnect the tutor.');
-      }
+      });
       let result;
       try {
         result = await sendMentorTurnStream(binding.course_slug, request, () => {});

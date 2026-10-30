@@ -20,6 +20,25 @@
 .forge-hands-on-box[data-state="failed"], .forge-hands-on-box[data-state="refused"] { border-inline-start: 4px solid #e8590c; }
 .forge-hands-on-saving { font-size: .9rem; color: var(--tk-text-secondary); }
 .forge-hands-on-saving:empty { display: none; }
+/* Rating rows (D81): quiet, small and muted, right-aligned under each block, with room around them. */
+.forge-rating-slot { margin-block: 1rem 2rem; }
+.forge-rating { font-size: .85rem; line-height: 1.4; color: var(--tk-text-secondary); }
+.forge-rating-bar, .forge-rating-reasons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .5rem; }
+.forge-rating-label { margin-inline-end: .25rem; }
+.forge-rating-thumb { display: inline-grid; place-items: center; min-width: 2.25rem; min-height: 2rem; padding: .15rem .5rem; border: 1px solid var(--tk-border-secondary); border-radius: 999px; background: transparent; font-size: 1rem; line-height: 1; filter: grayscale(1); opacity: .7; }
+.forge-rating-thumb:hover, .forge-rating-thumb[aria-pressed="true"] { filter: none; opacity: 1; border-color: var(--tk-border-primary); background: var(--tk-background-secondary); }
+.forge-rating-line:empty { display: none; }
+.forge-rating-reasons { margin-block-start: .75rem; }
+.forge-rating-chip { padding: .25rem .7rem; border: 1px solid var(--tk-border-secondary); border-radius: 999px; background: transparent; color: var(--tk-text-secondary); font-size: .8rem; }
+.forge-rating-chip:hover { color: var(--tk-text-primary); }
+.forge-rating-chip[aria-pressed="true"] { color: var(--tk-text-primary); border-color: var(--tk-text-secondary); background: var(--tk-background-secondary); }
+.forge-rating-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .4rem .5rem; width: 100%; margin-block-start: .5rem; text-align: start; }
+.forge-rating-note label { grid-column: 1 / -1; font-size: .8rem; }
+.forge-rating-note textarea { width: 100%; padding: .4rem .55rem; font: inherit; color: var(--tk-text-primary); background: transparent; border: 1px solid var(--tk-border-secondary); border-radius: .375rem; resize: vertical; }
+.forge-rating-note button { padding: .3rem .75rem; border: 1px solid var(--tk-border-secondary); border-radius: .375rem; }
+.forge-rating-note button:disabled { opacity: .5; }
+.markdown-content .forge-rating-refused, .forge-rating-refused { grid-column: 1 / -1; margin: 0; color: #c2410c; line-height: 1.4; }
+.forge-rating-thumb:focus-visible, .forge-rating-chip:focus-visible, .forge-rating-note :focus-visible { outline: 2px solid var(--tk-text-primary); outline-offset: 2px; }
 @media (max-width: 640px) { .forge-create-link { font-size: .7rem; white-space: normal; max-width: 7rem; } }
 
 

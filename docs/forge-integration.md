@@ -82,6 +82,19 @@ A link to another site, such as a citation's doc page or code lines, opens in a 
 tab (`src/lib/externalLinks.mjs`, a remark plugin in `astro.config.ts`), so following it
 never leaves the tutorial and its WebContainer session.
 
+Rating buttons (Learning Forge D71, D81): each manifest lesson row lists the blocks a learner
+rates on that page (`blocks`: each `##` section of a lesson and each quiz in it, with the index
+of its section; or the whole page for a hands-on task or an exercise), and the manifest lists the
+reason chips (`rating_reasons`). `Ratings.tsx` puts a quiet row under each block
+(`ratingsPage.mjs` decides where: a section's row at its end or above its quiz, a quiz's row under
+it, a whole-page row after the text): thumbs up and down, then the chips and an optional note
+after a press (`ratingRow.mjs`). Each press saves at once through Forge's
+`/api/courses/{slug}/ratings`, one request at a time in press order, each carrying the block's
+whole rating so the latest press wins (`ratingSaves.mjs`); nothing pops up. The note box clears
+anything shaped like a key or token as it arrives (the hands-on key guard), and Forge refuses one
+too. If the page doesn't show exactly the sections Forge listed, every row goes after the text,
+naming its block.
+
 `/open?course=<slug>&module=<optional-module-id>` polls `/forge-courses.json`:
 
 ```json
