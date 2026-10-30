@@ -3,6 +3,7 @@ import { sendMentorTurnStream } from '@forge/api';
 import { establishOwnerSession } from '@forge/bootstrap';
 import { tutorialStore } from '@tutorialkit-webcontainer';
 import { followLessonPages } from './drawerSession.mjs';
+import { tutorReplyText } from './tutorReply.mjs';
 
 type Binding = { course_slug: string; lesson_id: string; title: string; assigned_evidence?: { mentor_anchor: string; evidence_ref: { corpus_slug?: string } }[] };
 let ownerSession: ReturnType<typeof establishOwnerSession> | undefined;
@@ -62,19 +63,7 @@ export default function ForgeTools() {
         result = await sendMentorTurnStream(binding.course_slug, baseRequest, () => {});
       }
       if (activeRoute.current !== sentRoute || route() !== sentRoute) return;
-      let text = '';
-      if (['probe', 'probe_retry', 'resolved'].includes(result.status)) text = result.display?.content || '';
-      else if (['validated', 'repaired'].includes(result.status)) {
-        text = (result.display?.segments || []).map((segment: any) => [
-          ...(segment.kind === 'general_knowledge' ? [segment.label] : []), segment.text,
-          ...(segment.citations || []).map((citation: any) => {
-            const source = binding.assigned_evidence?.find((item) => item.mentor_anchor === citation.anchor)?.evidence_ref?.corpus_slug;
-            const label = citation.source_course_label || source?.replaceAll('-', ' ') || 'Course source passage';
-            const evidence = ['OK', 'REVIEW', 'GAP'].includes(citation.evidence_status)
-              ? ` — ${citation.evidence_label || citation.evidence_status}` : '';
-            return `“${citation.quote}” (${label}${evidence})`;
-          })].join('\n')).join('\n\n');
-      } else if (result.status === 'withheld') text = 'The tutor could not ground an answer in this lesson’s sources.';
+      const text = tutorReplyText(result);
       if (!text) throw new Error('The tutor returned no validated response.');
       setTurns((rows) => [...rows, { role: 'Tutor', text }]);
       const { probe_id: _id, probe_result: _result, ...baseRequest } = request;

@@ -72,6 +72,16 @@ containing the original `{mentor_anchor, evidence_ref}` pairs. The tutor sends
 only the selected lesson binding and displays server-authored probes or validated
 responses. It does not create an alternate assessment system.
 
+Lesson text arrives as the learner reads it (Learning Forge E2.2a, D43): Forge strips
+every hidden marker and writes a `Source: ...` line under each quote, naming the real
+source in plain words (a book title, a doc page and its link, a repo path, or an
+uploaded file's original name). The tutor drawer shows each cited quote with only the
+`citation` text Forge sent for it (`tutorReply.mjs`): no evidence badge, and no name of
+its own when Forge sent none.
+A link to another site, such as a citation's doc page or code lines, opens in a new
+tab (`src/lib/externalLinks.mjs`, a remark plugin in `astro.config.ts`), so following it
+never leaves the tutorial and its WebContainer session.
+
 `/open?course=<slug>&module=<optional-module-id>` polls `/forge-courses.json`:
 
 ```json
