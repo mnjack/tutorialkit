@@ -40,6 +40,7 @@ test('a saved note shows in its box, at most 2,000 characters', () => {
   const html = row({ rating: { vote: 'up', reasons: [], note: 'More of these, please.' } });
   assert.match(html, /<textarea[^>]*maxLength="2000"[^>]*>More of these, please\.<\/textarea>/i);
   assert.match(html, /<button type="button" disabled="">Save note<\/button>/);
+  assert.doesNotMatch(html, /autofocus/i, 'a saved note shown on load never takes focus');
 });
 
 test('a row placed away from its block names the block', () => {

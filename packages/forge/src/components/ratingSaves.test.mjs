@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ratingSaves } from './ratingSaves.mjs';
+import { notSaved, NOT_SAVED, NOT_SAVED_NOW, ratingSaves, SAVED } from './ratingSaves.mjs';
 
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
@@ -79,4 +79,16 @@ test('a refused save says so on that block only, and a page turn stops the rest'
   requests[1].store();
   await settle();
   assert.equal(page.lines.b, undefined);
+});
+
+test('a failed save shows plain words: Forge\'s own reason only for a learner refusal', () => {
+  const refused = (status, message) => Object.assign(new Error(message), { status });
+  const keyNote = 'This note looks like an API key or token, so it wasn’t kept.';
+  assert.equal(notSaved(refused(422, keyNote)), keyNote);
+  assert.equal(notSaved(refused(404, 'This page isn’t part of the course.')), 'This page isn’t part of the course.');
+  assert.equal(notSaved(refused(409, 'Defect admission blocked: defect-report.json is missing; rebuild the course.')), NOT_SAVED_NOW);
+  assert.equal(notSaved(refused(401, 'Invalid local session')), NOT_SAVED_NOW);
+  assert.equal(notSaved(refused(500, 'Internal Server Error')), NOT_SAVED_NOW);
+  assert.equal(notSaved(new TypeError('Failed to fetch')), NOT_SAVED);
+  assert.equal(SAVED, 'Saved.');
 });

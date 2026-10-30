@@ -6,6 +6,21 @@
 
 const EMPTY = { vote: null, reasons: [], note: '' };
 
+export const SAVED = 'Saved.';
+export const NOT_SAVED = 'Not saved: open Forge to save ratings.';
+export const NOT_SAVED_NOW = 'Forge couldn’t save this just now. Try again in a moment.';
+// The statuses the rating route refuses a press with, in words written for the learner (a note
+// shaped like a key, a part of the page the course no longer has). Any other refusal (the course
+// is being rebuilt or fails its checks, a stale session) carries Forge's internal wording.
+const PLAIN_REFUSALS = new Set([404, 422]);
+
+/** The row's line when a save fails: Forge's plain refusal, else "try again", else "open Forge". */
+export function notSaved(error) {
+  const status = error?.status;
+  if (PLAIN_REFUSALS.has(status) && error.message) return error.message;
+  return Number.isInteger(status) ? NOT_SAVED_NOW : NOT_SAVED;
+}
+
 /** The block's rating after one press: a thumb, a chip (on or off) or the note. */
 export function applyPress(rating, press) {
   if (press.vote) return { ...rating, vote: press.vote };

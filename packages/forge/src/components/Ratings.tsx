@@ -5,7 +5,7 @@ import { getRatings, saveRating } from '@forge/api';
 import { lessonAt, manifestForRoute, normalizeRoute } from './manifest.mjs';
 import { connected } from './ownerSession';
 import { RatingRow } from './ratingRow.mjs';
-import { ratingSaves } from './ratingSaves.mjs';
+import { notSaved, ratingSaves, SAVED } from './ratingSaves.mjs';
 import { ratingSlots, removeSlots } from './ratingsPage.mjs';
 
 // Rating buttons (Learning Forge D71, D81): a quiet row of thumbs under each block Forge listed
@@ -16,18 +16,6 @@ import { ratingSlots, removeSlots } from './ratingsPage.mjs';
 type Block = { id: string; kind: string; name: string; section?: number };
 type Rating = { vote: string | null; reasons: string[]; note: string };
 type Reason = { id: string; label: string };
-
-export const SAVED = 'Saved.';
-export const NOT_SAVED = 'Not saved: open Forge to save ratings.';
-export const NOT_SAVED_NOW = 'Forge couldn’t save this just now. Try again in a moment.';
-
-// Forge refused with a plain reason (a note shaped like a key, a part of the page the course no
-// longer has): show it. Forge answered with an error: try again. No answer: Forge isn't open.
-function notSaved(error: any) {
-  const status = error?.status;
-  if (Number.isInteger(status) && status >= 400 && status < 500 && error.message) return error.message;
-  return Number.isInteger(status) ? NOT_SAVED_NOW : NOT_SAVED;
-}
 
 export default function Ratings() {
   const [page, setPage] = useState<{ blocks: Block[]; slots: HTMLElement[]; reasons: Reason[] } | null>(null);
